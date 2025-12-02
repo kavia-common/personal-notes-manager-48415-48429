@@ -1,47 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import "./styles/theme.css";
+import "./App.css"; // keep existing for baseline, though theme.css provides the new theme
+import { Navbar } from "./components/Navbar";
+import { Sidebar } from "./components/Sidebar";
+import { NotesList } from "./components/NotesList";
+import { NoteEditor } from "./components/NoteEditor";
+import { EmptyState } from "./components/EmptyState";
+import { useNotes } from "./hooks/useNotes";
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * App
+ * Notes application entry component with top navbar, sidebar, list, and editor.
+ */
 function App() {
-  const [theme, setTheme] = useState('light');
-
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  /** This is a public function. */
+  const {
+    filtered,
+    selected,
+    selectedId,
+    setSelectedId,
+    query,
+    setQuery,
+    activeFilter,
+    setFilterCategory,
+    tags,
+    setFilterTag,
+    createNote,
+    updateNote,
+    deleteNote,
+    toggleFavorite,
+    toggleArchive,
+    loading,
+  } = useNotes();
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app">
+      <Navbar query={query} onQueryChange={setQuery} onNew={createNote} />
+      <div className="container">
+        <Sidebar
+          activeFilter={activeFilter}
+          onCategory={setFilterCategory}
+          tags={tags}
+          onTag={setFilterTag}
+        />
+        <main className="main" role="main">
+          <NotesList
+            notes={filtered}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onNew={createNote}
+          />
+          <div className="card" style={{ padding: 0 }}>
+            {loading ? (
+              <div className="empty-state" aria-live="polite">Loading...</div>
+            ) : selected ? (
+              <NoteEditor
+                note={selected}
+                onChange={updateNote}
+                onDelete={deleteNote}
+                onToggleFav={toggleFavorite}
+                onToggleArchive={toggleArchive}
+              />
+            ) : (
+              <EmptyState onNew={createNote} />
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
